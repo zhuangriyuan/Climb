@@ -574,19 +574,13 @@ html,body{
   padding:16px;
   margin-bottom:18px;
 }
-.form-row{
-  display:flex;
-  gap:10px;
-  margin-bottom:10px;
-}
-.form-row .form-field:first-child{ flex:1.35; }
-.form-row .form-field:last-child{ flex:1; }
 .form-field{
   flex:1;
   min-width:0;
   display:flex;
   flex-direction:column;
   gap:5px;
+  margin-bottom:10px;
   font-size:11.5px;
   color:var(--ink-soft);
   font-weight:600;
@@ -921,14 +915,12 @@ html,body{
       </div>
 
       <div class="pullup-form">
-        <div class="form-row">
-          <label class="form-field">日期
-            <input type="date" id="pu-date">
-          </label>
-          <label class="form-field">负重 (kg)
-            <input type="number" id="pu-weight" step="0.5" min="0" placeholder="0">
-          </label>
-        </div>
+        <label class="form-field">日期
+          <input type="date" id="pu-date">
+        </label>
+        <label class="form-field">负重 (kg)
+          <input type="number" id="pu-weight" step="0.5" min="0" placeholder="0">
+        </label>
         <label class="form-field">每组次数
           <input type="text" id="pu-reps" placeholder="比如 5,5,4 或 5 5 4">
         </label>
