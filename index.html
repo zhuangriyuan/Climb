@@ -598,6 +598,26 @@ html,body{
   font-family:inherit;
   padding:0 10px;
 }
+.date-input-wrap{
+  width:100%;
+  height:46px;
+  overflow:hidden;
+  border:1.5px solid var(--line);
+  border-radius:10px;
+  background:var(--surface);
+}
+.date-input-wrap input[type="date"]{
+  width:100%;
+  height:100%;
+  border:none;
+  background:transparent;
+  box-sizing:border-box;
+  padding:0 10px;
+  color:var(--ink);
+  font-size:15px;
+  font-family:inherit;
+  -webkit-appearance:none;
+}
 .reps-hint{
   font-size:11px;
   color:var(--ink-soft);
@@ -916,7 +936,9 @@ html,body{
 
       <div class="pullup-form">
         <label class="form-field">日期
-          <input type="date" id="pu-date">
+          <div class="date-input-wrap">
+            <input type="date" id="pu-date">
+          </div>
         </label>
         <label class="form-field">负重 (kg)
           <input type="number" id="pu-weight" step="0.5" min="0" placeholder="0">
