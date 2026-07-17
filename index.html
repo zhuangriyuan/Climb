@@ -197,13 +197,9 @@ html,body{
   cursor:pointer;
 }
 .zone.state-normal .finger-shape{ fill:var(--surface); }
-.palm-shape{
-  stroke:var(--line);
-  stroke-width:1.6;
-}
 .palm-backdrop{
   fill:var(--surface);
-  stroke:var(--line);
+  stroke:var(--ink-soft);
   stroke-width:1.6;
   pointer-events:none;
 }
@@ -371,9 +367,9 @@ html,body{
   padding:13px 16px;
   border-bottom:1px solid var(--line);
 }
-.summary-row{ cursor:pointer; }
+.summary-row, .stats-row{ cursor:pointer; }
 .summary-row:last-child, .stats-row:last-child, .pullup-row:last-child{ border-bottom:none; }
-.summary-row:active{ background:var(--bg); }
+.summary-row:active, .stats-row:active{ background:var(--bg); }
 .row-dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
 .row-label{ flex:1; font-size:14px; font-weight:500; }
 .row-days{ font-size:12px; color:var(--ink-soft); white-space:nowrap; }
@@ -971,6 +967,7 @@ html,body{
       </div>
 
       <p class="section-title">磨损部位排行</p>
+      <p class="hint-line" style="margin:-4px 0 12px;">点一条记录可以修正次数（误点了可以减掉）</p>
       <div class="stats-list" id="stats-list"></div>
       <p class="empty-hint" id="stats-empty">还没有记录，攀岩后点手指开始记录吧</p>
       <button class="reset-link" id="reset-stats-btn">重置统计</button>
@@ -1038,6 +1035,15 @@ html,body{
     </div>
     <p class="auth-error" id="auth-error"></p>
   </div>
+</div>
+
+<div class="sheet" id="stat-sheet">
+  <div class="sheet-handle"></div>
+  <p class="sheet-title" id="stat-sheet-title">左手中指·指尖</p>
+  <p class="sheet-sub" id="stat-sheet-sub">当前记录 4 次</p>
+  <button class="sheet-btn" id="stat-minus-btn">减少一次（误点了）</button>
+  <button class="sheet-btn" id="stat-clear-btn">清零这条记录</button>
+  <button class="sheet-btn sheet-btn-ghost" id="stat-cancel-btn">取消</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1115,6 +1121,7 @@ let pullupLog = [];
 let pullupPage = 1;
 const PULLUP_PAGE_SIZE = 8;
 let currentKey = null; // { hand, finger, part }
+let currentStatKey = null;
 let toastTimer = null;
 let confirmClearTimer = null;
 let confirmResetStatsTimer = null;
@@ -1575,6 +1582,7 @@ function attachSheetListeners(){
   document.getElementById('sheet-backdrop').addEventListener('click', () => {
     closeSheet();
     closeThresholdSheet();
+    closeStatSheet();
   });
 }
 
@@ -1768,7 +1776,7 @@ function renderStats(){
 
   const max = entries[0].count;
   list.innerHTML = entries.map(e => `
-    <div class="stats-row">
+    <div class="stats-row" data-hand="${e.hand}" data-finger="${e.finger}" data-part="${e.part}">
       <span class="stats-label">${zoneLabel(e.hand, e.finger, e.part)}</span>
       <div class="stats-bar-track"><div class="stats-bar-fill" style="width:${Math.max(6, Math.round(e.count/max*100))}%"></div></div>
       <span class="stats-count">${e.count}</span>
@@ -1797,6 +1805,47 @@ function attachStatsListeners(){
     }
   });
   attachTrendChartListener();
+
+  document.getElementById('stats-list').addEventListener('click', (e) => {
+    const row = e.target.closest('.stats-row');
+    if (!row) return;
+    openStatSheet(row.dataset.hand, row.dataset.finger, row.dataset.part);
+  });
+
+  document.getElementById('stat-minus-btn').addEventListener('click', () => {
+    if (!currentStatKey) return;
+    const next = Math.max(0, (stats[currentStatKey] || 0) - 1);
+    if (next === 0) delete stats[currentStatKey]; else stats[currentStatKey] = next;
+    saveStats();
+    renderStats();
+    showToast('已减少一次');
+    closeStatSheet();
+  });
+
+  document.getElementById('stat-clear-btn').addEventListener('click', () => {
+    if (!currentStatKey) return;
+    delete stats[currentStatKey];
+    saveStats();
+    renderStats();
+    showToast('已清零这条记录');
+    closeStatSheet();
+  });
+
+  document.getElementById('stat-cancel-btn').addEventListener('click', closeStatSheet);
+}
+
+function openStatSheet(hand, finger, part){
+  currentStatKey = keyFor(hand, finger, part);
+  const count = stats[currentStatKey] || 0;
+  document.getElementById('stat-sheet-title').textContent = zoneLabel(hand, finger, part);
+  document.getElementById('stat-sheet-sub').textContent = `当前记录 ${count} 次`;
+  document.getElementById('stat-sheet').classList.add('open');
+  document.getElementById('sheet-backdrop').classList.add('open');
+}
+function closeStatSheet(){
+  document.getElementById('stat-sheet').classList.remove('open');
+  document.getElementById('sheet-backdrop').classList.remove('open');
+  currentStatKey = null;
 }
 
 /* ---------- pull-up tab ---------- */
