@@ -1,0 +1,1952 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#161310">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="攀">
+<title>攀</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap');
+
+:root{
+  --bg:#F3EEE4;
+  --surface:#FBF8F2;
+  --card:#FFFFFF;
+  --ink:#2E2B27;
+  --ink-soft:#8B8377;
+  --line:#E4DCCB;
+  --red:#C1442C;
+  --red-soft:#EFD3CB;
+  --amber:#DFA02B;
+  --amber-soft:#F5E3B8;
+  --amber-ink:#8A6410;
+  --sage:#6B8F71;
+  --sage-soft:#B9E2B4;
+  --grain:rgba(0,0,0,0.03);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html[data-theme="dark"]{
+  --bg:#161310;
+  --surface:#242019;
+  --card:#1E1B16;
+  --ink:#F1EBDF;
+  --ink-soft:#9C9284;
+  --line:#332D24;
+  --red:#E2593C;
+  --red-soft:#3E241D;
+  --amber:#EFB840;
+  --amber-soft:#3B2E15;
+  --amber-ink:#F0C666;
+  --sage:#84AC8A;
+  --sage-soft:#4E8B54;
+  --grain:rgba(255,255,255,0.025);
+}
+
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+
+html,body{
+  margin:0; padding:0; height:100%;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 15% 8%, var(--grain) 0, transparent 45%),
+    var(--bg);
+  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
+  color:var(--ink);
+  transition:background .25s ease, color .25s ease;
+}
+
+.phone{
+  max-width:430px;
+  margin:0 auto;
+  height:100vh;
+  height:100dvh;
+  display:flex;
+  flex-direction:column;
+  background:var(--bg);
+  position:relative;
+  overflow:hidden;
+}
+
+.statusbar{
+  padding: calc(var(--safe-top) + 10px) 22px 6px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-size:15px;
+  font-weight:600;
+  color:var(--ink);
+  letter-spacing:0.2px;
+  flex-shrink:0;
+}
+.statusbar .icons{display:flex; align-items:center; gap:5px;}
+.statusbar svg{display:block;}
+
+.app-scroll{
+  flex:1;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding: 4px 20px 20px;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+}
+.app-scroll::-webkit-scrollbar{ display:none; width:0; height:0; }
+
+.app-header{ padding: 10px 2px 16px; }
+.header-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+.theme-toggle{
+  width:38px;
+  height:38px;
+  flex-shrink:0;
+  border-radius:50%;
+  border:1px solid var(--line);
+  background:var(--card);
+  font-size:17px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-top:2px;
+}
+.eyebrow{
+  font-family:'Oswald', sans-serif;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:3px;
+  color:var(--red);
+  margin:0 0 6px;
+  text-transform:uppercase;
+}
+.app-header h1{
+  font-family:'Oswald', sans-serif;
+  font-size:28px;
+  font-weight:600;
+  letter-spacing:0.3px;
+  margin:0 0 8px;
+  color:var(--ink);
+}
+.app-header .sub{
+  margin:0;
+  font-size:14px;
+  line-height:1.5;
+  color:var(--ink-soft);
+  max-width:34ch;
+}
+
+.tab-panel[hidden]{ display:none; }
+
+/* hands card */
+.hands-card{
+  background:
+    radial-gradient(circle, rgba(139,131,119,0.16) 1px, transparent 1.3px) 0 0/14px 14px,
+    var(--card);
+  border:1px solid var(--line);
+  border-radius:26px;
+  padding:22px 8px 16px;
+  display:flex;
+  justify-content:space-around;
+  align-items:flex-end;
+  gap:4px;
+  box-shadow:0 10px 24px rgba(46,43,39,0.06);
+}
+
+.hand-block{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  flex:1;
+}
+.hand-label{
+  font-family:'Oswald', sans-serif;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:2px;
+  color:var(--ink-soft);
+  text-transform:uppercase;
+}
+
+.hand-svg{
+  width:100%;
+  max-width:172px;
+  height:auto;
+  filter:drop-shadow(0 6px 12px rgba(46,43,39,0.10));
+  touch-action:manipulation;
+}
+
+.finger-shape{
+  stroke:var(--ink-soft);
+  stroke-width:1.6;
+  transition:fill .2s ease, stroke .2s ease;
+  transform-box:fill-box;
+  transform-origin:center;
+  cursor:pointer;
+}
+.zone.state-normal .finger-shape{ fill:var(--sage-soft); }
+.zone[data-finger="palm"].state-normal .finger-shape{ fill:var(--surface); }
+.palm-shape{
+  stroke:var(--line);
+  stroke-width:1.6;
+}
+.palm-backdrop{
+  fill:var(--surface);
+  stroke:var(--line);
+  stroke-width:1.6;
+  pointer-events:none;
+}
+.nail{
+  fill:rgba(255,255,255,0.55);
+  pointer-events:none;
+}
+.zone.state-fresh .nail, .zone.state-healing .nail{
+  fill:rgba(255,255,255,0.3);
+}
+.tape{
+  fill:none;
+  opacity:0;
+  transition:opacity .2s ease;
+  pointer-events:none;
+}
+.zone.state-healing .tape{
+  fill:#FFFFFF;
+  opacity:0.85;
+}
+.day-num{
+  font-size:9px;
+  font-weight:700;
+  font-family:'Oswald', sans-serif;
+  pointer-events:none;
+  user-select:none;
+  opacity:0;
+  transition:opacity .2s ease;
+}
+.zone.state-fresh .day-num, .zone.state-healing .day-num{ opacity:1; }
+
+.zone.state-fresh .finger-shape{
+  fill:var(--red);
+  stroke:var(--red);
+  animation: pulse-red 1.8s ease-in-out infinite;
+}
+.zone.state-healing .finger-shape{
+  fill:var(--amber-soft);
+  stroke:var(--amber);
+}
+.zone.tap-anim .finger-shape{
+  animation: tap-pop .28s ease;
+}
+
+@keyframes pulse-red{ 0%,100%{opacity:1;} 50%{opacity:.6;} }
+@keyframes tap-pop{ 0%{transform:scale(1);} 45%{transform:scale(1.16);} 100%{transform:scale(1);} }
+@media (prefers-reduced-motion: reduce){
+  .zone.state-fresh .finger-shape{ animation:none; }
+  .zone.tap-anim .finger-shape{ animation:none; }
+}
+
+/* legend */
+.legend{
+  display:flex;
+  justify-content:center;
+  gap:14px;
+  padding:14px 4px 2px;
+  flex-wrap:wrap;
+}
+.legend-item{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:11.5px;
+  color:var(--ink-soft);
+}
+.dot{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+.dot-normal{ background:var(--surface); border:2px solid var(--ink-soft); }
+.dot-fresh{ background:var(--red); }
+.dot-healing{ background:var(--amber); }
+
+.hint-line{
+  text-align:center;
+  font-size:11.5px;
+  color:var(--ink-soft);
+  margin:2px 0 0;
+}
+
+.threshold-btn{
+  display:block;
+  margin:12px auto 0;
+  padding:8px 16px;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:var(--card);
+  color:var(--ink-soft);
+  font-size:12.5px;
+  font-weight:600;
+  font-family:inherit;
+}
+.threshold-options{
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:8px;
+  margin-bottom:16px;
+}
+.threshold-option{
+  padding:12px 0;
+  border:1.5px solid var(--line);
+  border-radius:12px;
+  background:var(--surface);
+  color:var(--ink);
+  font-size:14px;
+  font-weight:600;
+  font-family:inherit;
+}
+.threshold-option.active{
+  border-color:var(--amber);
+  background:var(--amber-soft);
+  color:var(--amber-ink);
+}
+
+/* per-part threshold chips inside detail sheet */
+.part-threshold-row{ margin:0 0 18px; }
+.part-threshold-label{
+  display:block;
+  text-align:center;
+  font-size:11px;
+  font-weight:600;
+  color:var(--ink-soft);
+  margin-bottom:8px;
+}
+.part-threshold-chips{
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:6px;
+}
+.chip{
+  padding:8px 0;
+  border:1.5px solid var(--line);
+  border-radius:12px;
+  background:var(--surface);
+  color:var(--ink);
+  font-size:12px;
+  font-weight:600;
+  font-family:inherit;
+}
+.chip.active{
+  border-color:var(--sage);
+  background:var(--sage);
+  color:#fff;
+}
+
+/* summary */
+.summary{ margin-top:22px; }
+.summary h2, .section-title{
+  font-family:'Oswald', sans-serif;
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:1px;
+  color:var(--ink-soft);
+  text-transform:uppercase;
+  margin:0 0 10px 2px;
+}
+.summary-list, .stats-list, .pullup-list{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  overflow:hidden;
+}
+.summary-row, .stats-row, .pullup-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:13px 16px;
+  border-bottom:1px solid var(--line);
+}
+.summary-row{ cursor:pointer; }
+.summary-row:last-child, .stats-row:last-child, .pullup-row:last-child{ border-bottom:none; }
+.summary-row:active{ background:var(--bg); }
+.row-dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.row-label{ flex:1; font-size:14px; font-weight:500; }
+.row-days{ font-size:12px; color:var(--ink-soft); white-space:nowrap; }
+.row-tag{
+  font-size:11px;
+  font-weight:600;
+  padding:4px 9px;
+  border-radius:20px;
+  letter-spacing:0.3px;
+  white-space:nowrap;
+}
+.tag-fresh{ color:var(--red); background:var(--red-soft); }
+.tag-healing{ color:var(--amber-ink); background:var(--amber-soft); }
+
+.empty-hint{
+  text-align:center;
+  font-size:13.5px;
+  color:var(--ink-soft);
+  padding:26px 20px;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  margin:0;
+}
+
+.clear-all, .reset-link{
+  display:block;
+  width:100%;
+  margin-top:22px;
+  padding:13px;
+  border:none;
+  border-radius:14px;
+  background:transparent;
+  color:var(--ink-soft);
+  font-size:13.5px;
+  font-weight:600;
+  font-family:inherit;
+}
+.clear-all.confirming, .reset-link.confirming{
+  color:#fff;
+  background:var(--red);
+}
+
+/* stats tab */
+.stats-total-card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:18px 18px;
+  text-align:center;
+  margin-bottom:18px;
+}
+.stats-total-num{
+  font-family:'Oswald', sans-serif;
+  font-size:34px;
+  font-weight:700;
+  color:var(--red);
+  display:block;
+  line-height:1.1;
+}
+.stats-total-label{
+  font-size:12.5px;
+  color:var(--ink-soft);
+  margin-top:4px;
+  display:block;
+}
+.stats-row{ gap:10px; }
+.stats-label{
+  width:118px;
+  flex-shrink:0;
+  font-size:12.5px;
+  font-weight:500;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.stats-bar-track{
+  flex:1;
+  height:8px;
+  background:var(--bg);
+  border-radius:4px;
+  overflow:hidden;
+}
+.stats-bar-fill{
+  height:100%;
+  background:var(--red);
+  border-radius:4px;
+  transition:width .3s ease;
+}
+.stats-count{
+  width:22px;
+  text-align:right;
+  font-size:13px;
+  font-weight:600;
+  color:var(--ink-soft);
+  flex-shrink:0;
+}
+
+/* chart card (now lives on the stats tab, sourced from pull-up log) */
+.chart-card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:16px 16px 12px;
+  margin-bottom:18px;
+}
+.chart-legend{
+  display:flex;
+  gap:14px;
+  font-size:11px;
+  font-weight:600;
+  color:var(--ink-soft);
+  margin-bottom:8px;
+}
+.legend-swatch{
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  display:inline-block;
+  margin-right:5px;
+  vertical-align:middle;
+}
+.swatch-line{ background:var(--sage); }
+.swatch-bar{ background:var(--amber); border-radius:2px; opacity:0.6; }
+.chart-plot{ position:relative; }
+.chart-y-max, .chart-y-min{
+  position:absolute;
+  left:2px;
+  font-size:10px;
+  font-weight:700;
+  color:var(--ink-soft);
+  background:var(--card);
+  padding:0 2px;
+  z-index:1;
+}
+.chart-y-max{ top:0; }
+.chart-y-min{ bottom:0; }
+.chart-svg{ width:100%; height:120px; display:block; }
+.chart-bar{ fill:var(--amber); opacity:0.32; cursor:pointer; }
+.chart-line{
+  fill:none;
+  stroke:var(--sage);
+  stroke-width:2.5;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.chart-dot{ fill:var(--sage); stroke:var(--card); stroke-width:1.5; cursor:pointer; }
+.chart-dot-pb{ fill:var(--amber); }
+.chart-x-labels{
+  display:flex;
+  justify-content:space-between;
+  font-size:11px;
+  color:var(--ink-soft);
+  margin-top:4px;
+}
+.chart-tap-hint{
+  text-align:center;
+  font-size:10.5px;
+  color:var(--ink-soft);
+  margin:6px 0 0;
+  opacity:0.75;
+}
+.chart-empty-hint{
+  font-size:12.5px;
+  color:var(--ink-soft);
+  text-align:center;
+  padding:22px 0;
+}
+
+/* pull-up tab */
+.pb-card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:18px;
+  text-align:center;
+  margin-bottom:18px;
+}
+.pb-label{
+  display:block;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  margin-bottom:6px;
+}
+.pb-value{
+  font-family:'Oswald', sans-serif;
+  font-size:30px;
+  font-weight:700;
+  color:var(--sage);
+}
+.pullup-form{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:16px;
+  margin-bottom:18px;
+}
+.form-row{
+  display:flex;
+  gap:10px;
+  margin-bottom:10px;
+}
+.form-field{
+  flex:1;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  font-size:11.5px;
+  color:var(--ink-soft);
+  font-weight:600;
+}
+.form-field input, .pu-note-input{
+  width:100%;
+  min-width:0;
+  border:1.5px solid var(--line);
+  border-radius:10px;
+  background:var(--surface);
+  color:var(--ink);
+  font-size:15px;
+  font-family:inherit;
+  padding:9px 10px;
+}
+.reps-hint{
+  font-size:11px;
+  color:var(--ink-soft);
+  font-weight:400;
+  margin:7px 0 14px;
+  line-height:1.4;
+}
+.pu-note-input{
+  width:100%;
+  margin-bottom:12px;
+}
+.pu-add-btn{
+  display:block;
+  width:100%;
+  padding:13px;
+  border:none;
+  border-radius:14px;
+  background:var(--sage);
+  color:#fff;
+  font-size:14.5px;
+  font-weight:600;
+  font-family:inherit;
+}
+.pullup-row{ justify-content:space-between; }
+.pullup-main{ display:flex; flex-direction:column; gap:2px; }
+.pullup-date{ font-size:11.5px; color:var(--ink-soft); font-weight:600; }
+.pullup-detail{ font-size:15.5px; font-weight:600; }
+.pullup-note{ font-size:12px; color:var(--ink-soft); }
+.pullup-del{
+  width:26px; height:26px;
+  border-radius:50%;
+  border:none;
+  background:var(--surface);
+  color:var(--ink-soft);
+  font-size:15px;
+  line-height:1;
+  flex-shrink:0;
+}
+.pullup-pagination{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:16px;
+  margin-top:14px;
+}
+.page-btn{
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  border:1px solid var(--line);
+  background:var(--card);
+  color:var(--ink);
+  font-size:15px;
+  font-family:inherit;
+}
+.page-btn:disabled{ opacity:0.3; }
+.page-info{
+  font-size:12.5px;
+  font-weight:600;
+  color:var(--ink-soft);
+}
+
+/* tab bar */
+.tabbar{
+  flex-shrink:0;
+  display:flex;
+  border-top:1px solid var(--line);
+  background:var(--card);
+}
+.tab-btn{
+  position:relative;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:3px;
+  padding:10px 0 6px;
+  border:none;
+  background:transparent;
+  font-size:10.5px;
+  font-weight:600;
+  color:var(--ink-soft);
+  opacity:0.5;
+  font-family:inherit;
+  transition:opacity .2s ease, color .2s ease;
+}
+.tab-btn .tab-icon{
+  font-size:21px;
+  line-height:1;
+  transition:transform .2s ease;
+}
+.tab-btn.active{
+  opacity:1;
+  color:var(--sage);
+}
+.tab-btn.active .tab-icon{ transform:translateY(-1px) scale(1.12); }
+.tab-btn.active::before{
+  content:'';
+  position:absolute;
+  top:0;
+  left:50%;
+  transform:translateX(-50%);
+  width:26px;
+  height:3px;
+  border-radius:0 0 3px 3px;
+  background:var(--sage);
+}
+
+.home-indicator{
+  flex-shrink:0;
+  padding-bottom: calc(var(--safe-bottom) + 8px);
+  padding-top:6px;
+  display:flex;
+  justify-content:center;
+  background:var(--card);
+}
+.home-indicator::after{
+  content:'';
+  width:134px;
+  height:5px;
+  border-radius:3px;
+  background:var(--ink);
+  opacity:0.85;
+}
+
+/* bottom sheet */
+.sheet-backdrop{
+  position:fixed; inset:0;
+  background:rgba(46,43,39,0.32);
+  opacity:0; pointer-events:none;
+  transition:opacity .25s ease;
+  z-index:20;
+}
+.sheet-backdrop.open{ opacity:1; pointer-events:auto; }
+
+.sheet{
+  position:fixed;
+  left:50%;
+  bottom:0;
+  transform:translate(-50%, 100%);
+  width:100%;
+  max-width:430px;
+  background:var(--card);
+  border-radius:24px 24px 0 0;
+  padding:10px 20px calc(var(--safe-bottom) + 20px);
+  transition:transform .28s cubic-bezier(.32,.72,0,1);
+  z-index:21;
+  box-shadow:0 -8px 30px rgba(46,43,39,0.18);
+  max-height:82vh;
+  overflow-y:auto;
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+}
+.sheet::-webkit-scrollbar{ display:none; width:0; height:0; }
+.sheet.open{ transform:translate(-50%, 0); }
+
+.sheet-handle{
+  width:36px; height:5px; border-radius:3px;
+  background:var(--line);
+  margin:6px auto 16px;
+}
+.sheet-title{
+  font-family:'Oswald', sans-serif;
+  font-size:18px;
+  font-weight:600;
+  margin:0 0 2px;
+  text-align:center;
+}
+.sheet-sub{
+  font-size:13px;
+  color:var(--ink-soft);
+  text-align:center;
+  margin:0 0 18px;
+}
+.sheet-btn{
+  display:block;
+  width:100%;
+  padding:14px;
+  margin-bottom:10px;
+  border:none;
+  border-radius:14px;
+  font-size:15.5px;
+  font-weight:600;
+  font-family:inherit;
+  background:var(--surface);
+  color:var(--ink);
+}
+.sheet-btn-primary{ background:var(--sage); color:#fff; }
+.sheet-btn-ghost{ background:transparent; color:var(--ink-soft); margin-bottom:0; }
+
+/* auth overlay */
+.auth-overlay{
+  position:fixed; inset:0; z-index:50;
+  background:var(--bg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+.auth-card{
+  width:100%;
+  max-width:340px;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:30px 24px;
+  text-align:center;
+}
+.auth-title{
+  font-family:'Oswald', sans-serif;
+  font-size:34px;
+  font-weight:700;
+  color:var(--red);
+  margin:0 0 6px;
+}
+.auth-sub{
+  font-size:13px;
+  color:var(--ink-soft);
+  margin:0 0 22px;
+}
+.auth-input{
+  width:100%;
+  padding:12px 14px;
+  margin-bottom:10px;
+  border:1.5px solid var(--line);
+  border-radius:12px;
+  background:var(--surface);
+  color:var(--ink);
+  font-size:15px;
+  font-family:inherit;
+  text-align:center;
+}
+.auth-btn{
+  width:100%;
+  padding:13px;
+  border:none;
+  border-radius:14px;
+  background:var(--sage);
+  color:#fff;
+  font-size:15px;
+  font-weight:600;
+  font-family:inherit;
+}
+.auth-error{
+  font-size:12.5px;
+  color:var(--red);
+  margin:10px 0 0;
+  min-height:16px;
+}
+
+/* toast */
+.toast{
+  position:fixed;
+  left:50%;
+  top: calc(var(--safe-top) + 54px);
+  transform:translate(-50%, -12px);
+  background:#2E2B27;
+  color:#FBF8F2;
+  font-size:13px;
+  font-weight:500;
+  padding:10px 18px;
+  border-radius:20px;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .2s ease, transform .2s ease;
+  z-index:30;
+  white-space:nowrap;
+  max-width:88vw;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.toast.show{ opacity:1; transform:translate(-50%, 0); }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="statusbar">
+    <span id="clock">9:41</span>
+    <span class="icons">
+      <svg width="18" height="11" viewBox="0 0 18 11" fill="none"><rect x="0" y="6" width="3" height="5" rx="0.5" fill="currentColor"/><rect x="5" y="4" width="3" height="7" rx="0.5" fill="currentColor"/><rect x="10" y="2" width="3" height="9" rx="0.5" fill="currentColor"/><rect x="15" y="0" width="3" height="11" rx="0.5" fill="currentColor"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="1" y="1" width="21" height="10" rx="2.5" stroke="currentColor" stroke-width="1"/><rect x="23" y="4" width="1.6" height="4" rx="0.8" fill="currentColor"/><rect x="3" y="3" width="17" height="6" rx="1.2" fill="currentColor"/></svg>
+    </span>
+  </div>
+
+  <div class="app-scroll">
+    <header class="app-header">
+      <div class="header-top">
+        <div>
+          <p class="eyebrow" id="header-eyebrow">Hand Check</p>
+          <h1 id="header-title">护指记录仪</h1>
+        </div>
+        <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">🌙</button>
+      </div>
+      <p class="sub" id="header-sub">哪个部位磨破了皮，点一下它。每个部位可以单独设置恢复天数。</p>
+    </header>
+
+    <!-- TAB 1: 手指 -->
+    <section id="tab-fingers" class="tab-panel">
+      <section class="hands-card">
+        <div class="hand-block">
+          <span class="hand-label">左手</span>
+          <svg id="left-hand" class="hand-svg" viewBox="0 0 178 240"></svg>
+        </div>
+        <div class="hand-block">
+          <span class="hand-label">右手</span>
+          <svg id="right-hand" class="hand-svg" viewBox="0 0 178 240"></svg>
+        </div>
+      </section>
+
+      <div class="legend">
+        <span class="legend-item"><i class="dot dot-normal"></i>完好</span>
+        <span class="legend-item"><i class="dot dot-fresh"></i>受伤破皮中</span>
+        <span class="legend-item"><i class="dot dot-healing"></i>需贴保护</span>
+      </div>
+      <p class="hint-line">颜色越浅代表磨破的天数越久，数字是第几天</p>
+
+      <button class="threshold-btn" id="threshold-btn">默认恢复天数：2 天 ⌄</button>
+
+      <section class="summary">
+        <h2 id="summary-title">需要留意 (0)</h2>
+        <div class="summary-list" id="summary-list"></div>
+        <p class="empty-hint" id="summary-empty">手都好着呢，出发吧 🧗</p>
+      </section>
+
+      <button class="clear-all" id="clear-all-btn">清空当前手指状态</button>
+      <button class="reset-link" id="sign-out-btn">退出登录</button>
+    </section>
+
+    <!-- TAB 2: 引体 -->
+    <section id="tab-pullup" class="tab-panel" hidden>
+      <div class="pb-card">
+        <span class="pb-label">最大负重 PB</span>
+        <span class="pb-value" id="pb-value">--</span>
+      </div>
+
+      <div class="pullup-form">
+        <div class="form-row">
+          <label class="form-field">日期
+            <input type="date" id="pu-date">
+          </label>
+          <label class="form-field">负重 (kg)
+            <input type="number" id="pu-weight" step="0.5" min="0" placeholder="0">
+          </label>
+        </div>
+        <label class="form-field">每组次数
+          <input type="text" id="pu-reps" placeholder="比如 5,5,4 或 5 5 4">
+        </label>
+        <p class="reps-hint">每组次数不一样就用逗号或空格隔开，几个数字就是几组</p>
+        <input type="text" id="pu-note" class="pu-note-input" placeholder="备注（可选，比如动作感受）">
+        <button class="pu-add-btn" id="pu-add-btn">添加记录</button>
+      </div>
+
+      <p class="section-title">历史记录</p>
+      <div class="pullup-list" id="pullup-list"></div>
+      <p class="empty-hint" id="pullup-empty">还没有记录，练完第一组负重引体后来记一下吧 💪</p>
+      <div class="pullup-pagination" id="pullup-pagination"></div>
+    </section>
+
+    <!-- TAB 3: 统计 -->
+    <section id="tab-stats" class="tab-panel" hidden>
+      <div class="chart-card" id="trend-chart-card" style="display:none;">
+        <p class="section-title" style="margin-bottom:8px;">负重 × 次数趋势</p>
+        <div id="trend-chart"></div>
+        <p class="chart-tap-hint">点一下柱子或圆点，看那天的详细数据</p>
+      </div>
+
+      <div class="stats-total-card">
+        <span class="stats-total-num" id="stats-total-num">0</span>
+        <span class="stats-total-label">累计磨破次数</span>
+      </div>
+
+      <p class="section-title">磨损部位排行</p>
+      <div class="stats-list" id="stats-list"></div>
+      <p class="empty-hint" id="stats-empty">还没有记录，攀岩后点手指开始记录吧</p>
+      <button class="reset-link" id="reset-stats-btn">重置统计</button>
+    </section>
+  </div>
+
+  <nav class="tabbar">
+    <button class="tab-btn active" data-tab="fingers"><span class="tab-icon">🖐️</span><span>手指</span></button>
+    <button class="tab-btn" data-tab="pullup"><span class="tab-icon">💪</span><span>引体</span></button>
+    <button class="tab-btn" data-tab="stats"><span class="tab-icon">📊</span><span>统计</span></button>
+  </nav>
+  <div class="home-indicator"></div>
+</div>
+
+<div class="sheet-backdrop" id="sheet-backdrop"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <p class="sheet-title" id="sheet-title">左手中指·指尖</p>
+  <p class="sheet-sub" id="sheet-sub">第 2 天</p>
+  <div class="part-threshold-row">
+    <span class="part-threshold-label">此部位恢复天数</span>
+    <div class="part-threshold-chips" id="part-threshold-chips">
+      <button class="chip" data-days="default">默认</button>
+      <button class="chip" data-days="1">1</button>
+      <button class="chip" data-days="2">2</button>
+      <button class="chip" data-days="3">3</button>
+      <button class="chip" data-days="4">4</button>
+      <button class="chip" data-days="5">5</button>
+      <button class="chip" data-days="6">6</button>
+      <button class="chip" data-days="7">7</button>
+    </div>
+  </div>
+  <button class="sheet-btn sheet-btn-primary" id="sheet-heal">标记为已恢复</button>
+  <button class="sheet-btn" id="sheet-reinjure">今天又磨破了，重新计时</button>
+  <button class="sheet-btn sheet-btn-ghost" id="sheet-cancel">取消</button>
+</div>
+
+<div class="sheet" id="threshold-sheet">
+  <div class="sheet-handle"></div>
+  <p class="sheet-title">默认恢复天数</p>
+  <p class="sheet-sub">没有单独设置的部位，都会用这个天数</p>
+  <div class="threshold-options" id="threshold-options">
+    <button class="threshold-option" data-days="1">1 天</button>
+    <button class="threshold-option" data-days="2">2 天</button>
+    <button class="threshold-option" data-days="3">3 天</button>
+    <button class="threshold-option" data-days="4">4 天</button>
+    <button class="threshold-option" data-days="5">5 天</button>
+    <button class="threshold-option" data-days="6">6 天</button>
+    <button class="threshold-option" data-days="7">7 天</button>
+  </div>
+  <button class="sheet-btn sheet-btn-ghost" id="threshold-cancel">取消</button>
+</div>
+
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-card">
+    <p class="auth-title">攀</p>
+    <p class="auth-sub">私人记录，邮箱验证码登录</p>
+    <div id="auth-step-email">
+      <input type="email" id="auth-email" class="auth-input" placeholder="邮箱" autocomplete="email">
+      <button class="auth-btn" id="auth-send-code">发送验证码</button>
+    </div>
+    <div id="auth-step-code" style="display:none;">
+      <input type="text" id="auth-code" class="auth-input" placeholder="6位验证码" inputmode="numeric" autocomplete="one-time-code">
+      <button class="auth-btn" id="auth-verify-code">登录</button>
+      <button class="sheet-btn-ghost" id="auth-back" style="border:none;background:none;color:var(--ink-soft);font-size:12.5px;padding:8px;font-family:inherit;">换个邮箱</button>
+    </div>
+    <p class="auth-error" id="auth-error"></p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { init as initInstantDB, tx as instantTx, id as instantId } from 'https://esm.sh/@instantdb/core';
+
+const DATA_KEY = 'fc_finger_data';
+const STATS_KEY = 'fc_finger_stats';
+const SETTINGS_KEY = 'fc_settings';
+const PULLUP_KEY = 'fc_pullup_log';
+
+const VBW = 178; // svg viewBox width, used for mirroring geometry
+const FADE_TARGET = '#F5F0E6'; // fixed light neutral — fading is ALWAYS toward light, regardless of theme
+
+const FINGER_ORDER = ['pinky','ring','middle','index','thumb'];
+const FINGER_LABEL = { thumb:'拇指', index:'食指', middle:'中指', ring:'无名指', pinky:'小指' };
+const HAND_LABEL = { left:'左手', right:'右手' };
+const PART_LABEL = { tip:'指尖', mid:'中节', base:'指根' };
+
+const SEGMENTS = {
+  thumb:  ['tip','base'],
+  index:  ['tip','mid','base'],
+  middle: ['tip','mid','base'],
+  ring:   ['tip','mid','base'],
+  pinky:  ['tip','mid','base']
+};
+const SEG_PROPORTIONS = {
+  2: [0.42, 0.58],
+  3: [0.30, 0.33, 0.37]
+};
+
+// base (left-hand) finger geometry
+const GEOM = {
+  pinky:  { x:20,  y:40, w:24, h:85,  rot:-10 },
+  ring:   { x:46,  y:18, w:24, h:107, rot:-4  },
+  middle: { x:72,  y:8,  w:24, h:118, rot:0   },
+  index:  { x:98,  y:22, w:24, h:104, rot:6   },
+  thumb:  { x:112, y:104, w:24, h:60, rot:30  }
+};
+function mirrorGeom(g){ return { x: VBW - g.x - g.w, y:g.y, w:g.w, h:g.h, rot:-g.rot }; }
+const GEOM_MIRRORED = {};
+Object.keys(GEOM).forEach(f => { GEOM_MIRRORED[f] = mirrorGeom(GEOM[f]); });
+
+// palm: one rounded-rectangle "plate" that visually wraps 5 clickable circles —
+// a big circle for the palm center, plus a small circle under each of the four fingers
+const PALM_BACKDROP = { x:13, y:112, w:114, h:110, rx:34 };
+function mirrorRect(r){ return { ...r, x: VBW - r.x - r.w }; }
+const PALM_BACKDROP_MIRRORED = mirrorRect(PALM_BACKDROP);
+
+const PALM_ZONES = [
+  { part:'center', cx:70,  cy:186, r:29 },
+  { part:'pinky',  cx:32,  cy:136, r:12 },
+  { part:'ring',   cx:58,  cy:136, r:12 },
+  { part:'middle', cx:84,  cy:136, r:12 },
+  { part:'index',  cx:110, cy:136, r:12 }
+];
+function mirrorCircle(c){ return { ...c, cx: VBW - c.cx }; }
+const PALM_ZONES_MIRRORED = PALM_ZONES.map(mirrorCircle);
+
+const ALL_ZONES = [];
+FINGER_ORDER.forEach(f => SEGMENTS[f].forEach(part => ALL_ZONES.push({ finger: f, part })));
+PALM_ZONES.forEach(z => ALL_ZONES.push({ finger: 'palm', part: z.part }));
+
+const TAB_HEADER = {
+  fingers: { eyebrow:'Hand Check', title:'护指记录仪', sub:'哪个部位磨破了皮，点一下它。每个部位可以单独设置恢复天数。' },
+  pullup:  { eyebrow:'Weighted Pull-Up', title:'负重引体记录', sub:'记下每次负重和组数，追踪最大力量的进步。' },
+  stats:   { eyebrow:'Stats', title:'统计', sub:'负重进步和手指磨损情况都在这里。' }
+};
+
+let data = {};
+let stats = {};
+let settings = { theme: 'dark', thresholds: { default: 2 } };
+let pullupLog = [];
+let pullupPage = 1;
+const PULLUP_PAGE_SIZE = 8;
+let currentKey = null; // { hand, finger, part }
+let toastTimer = null;
+let confirmClearTimer = null;
+let confirmResetStatsTimer = null;
+let activeTab = 'fingers';
+
+/* ---------- storage ---------- */
+function safeGet(key, fallback){
+  try{
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  }catch(e){ return fallback; }
+}
+function safeSet(key, value){
+  try{
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  }catch(e){
+    showToast('保存失败，请重试');
+    return false;
+  }
+}
+function loadAll(){
+  data = safeGet(DATA_KEY, {});
+  stats = safeGet(STATS_KEY, {});
+  settings = safeGet(SETTINGS_KEY, { theme:'dark', thresholds:{ default:2 } });
+  if (settings.thresholdDays != null && !settings.thresholds){
+    settings.thresholds = { default: settings.thresholdDays };
+    delete settings.thresholdDays;
+  }
+  if (!settings.thresholds) settings.thresholds = { default: 2 };
+  if (settings.thresholds.default == null) settings.thresholds.default = 2;
+  pullupLog = safeGet(PULLUP_KEY, []);
+}
+function saveData(){ safeSet(DATA_KEY, data); queueCloudSave(); }
+function saveStats(){ safeSet(STATS_KEY, stats); queueCloudSave(); }
+function saveSettings(){ safeSet(SETTINGS_KEY, settings); queueCloudSave(); }
+function savePullups(){ safeSet(PULLUP_KEY, pullupLog); queueCloudSave(); }
+
+/* ---------- InstantDB cloud sync (email login, gated by permission rules — see chat for the rules JSON to paste in the dashboard) ---------- */
+const INSTANT_APP_ID = 'c9837502-d9ae-4649-9830-86347a4c00ae';
+const ALLOWED_EMAIL = 'zhuangriyuan@gmail.com';
+const APP_STATE_ID = '2f19c9d2-6b0a-4b7a-9c0e-8a1f00000001'; // fixed row id (valid UUID) — this whole app is single-user, so there's only ever one row
+
+let instantDB = null;
+let instantUser = null;
+let cloudSaveTimer = null;
+let applyingCloudUpdate = false;
+
+function initInstant(){
+  try{
+    instantDB = initInstantDB({ appId: INSTANT_APP_ID });
+  }catch(e){
+    console.error('InstantDB init failed', e);
+    document.getElementById('auth-error').textContent = '云端服务加载失败，先离线用着，稍后刷新重试';
+    return;
+  }
+
+  const emailInput = document.getElementById('auth-email');
+  if (emailInput) emailInput.value = ALLOWED_EMAIL;
+
+  instantDB.subscribeAuth((resp) => {
+    instantUser = resp.user || null;
+    if (instantUser){
+      document.getElementById('auth-overlay').style.display = 'none';
+      startCloudSync();
+    } else {
+      document.getElementById('auth-overlay').style.display = 'flex';
+    }
+  });
+
+  document.getElementById('auth-send-code').addEventListener('click', async () => {
+    const email = (document.getElementById('auth-email').value || '').trim();
+    const errEl = document.getElementById('auth-error');
+    errEl.textContent = '';
+    if (!email){ errEl.textContent = '先填邮箱'; return; }
+    try{
+      await instantDB.auth.sendMagicCode({ email });
+      document.getElementById('auth-step-email').style.display = 'none';
+      document.getElementById('auth-step-code').style.display = 'block';
+    }catch(e){
+      errEl.textContent = '发送失败：' + (e?.body?.message || e?.message || '请重试');
+    }
+  });
+
+  document.getElementById('auth-verify-code').addEventListener('click', async () => {
+    const email = (document.getElementById('auth-email').value || '').trim();
+    const code = (document.getElementById('auth-code').value || '').trim();
+    const errEl = document.getElementById('auth-error');
+    errEl.textContent = '';
+    if (!code){ errEl.textContent = '填一下验证码'; return; }
+    try{
+      await instantDB.auth.signInWithMagicCode({ email, code });
+    }catch(e){
+      errEl.textContent = '验证码不对，再试一次';
+    }
+  });
+
+  const backBtn = document.getElementById('auth-back');
+  if (backBtn){
+    backBtn.addEventListener('click', () => {
+      document.getElementById('auth-step-code').style.display = 'none';
+      document.getElementById('auth-step-email').style.display = 'block';
+      document.getElementById('auth-error').textContent = '';
+    });
+  }
+
+  const signOutBtn = document.getElementById('sign-out-btn');
+  if (signOutBtn){
+    signOutBtn.addEventListener('click', () => {
+      instantDB.auth.signOut();
+    });
+  }
+}
+
+function startCloudSync(){
+  instantDB.subscribeQuery({ appState: {} }, (resp) => {
+    if (resp.error){ console.error('cloud query error', resp.error); return; }
+    const rows = (resp.data && resp.data.appState) || [];
+    const row = rows.find(r => r.id === APP_STATE_ID);
+    if (row){
+      applyingCloudUpdate = true;
+      try{
+        data = row.fingerData ? JSON.parse(row.fingerData) : {};
+        stats = row.fingerStats ? JSON.parse(row.fingerStats) : {};
+        if (row.settings) settings = JSON.parse(row.settings);
+        pullupLog = row.pullupLog ? JSON.parse(row.pullupLog) : [];
+        safeSet(DATA_KEY, data);
+        safeSet(STATS_KEY, stats);
+        safeSet(SETTINGS_KEY, settings);
+        safeSet(PULLUP_KEY, pullupLog);
+        applyTheme();
+        updateDefaultThresholdUI();
+        renderFingers();
+        if (activeTab === 'stats') renderStats();
+        if (activeTab === 'pullup') renderPullups();
+      } finally {
+        applyingCloudUpdate = false;
+      }
+    } else {
+      // first login on this device: push whatever's currently local up to the cloud
+      pushCloudState();
+    }
+  });
+}
+
+function queueCloudSave(){
+  if (applyingCloudUpdate) return; // don't echo cloud->local updates straight back to the cloud
+  if (!instantDB || !instantUser) return;
+  clearTimeout(cloudSaveTimer);
+  cloudSaveTimer = setTimeout(pushCloudState, 500);
+}
+
+function pushCloudState(){
+  if (!instantDB || !instantUser) return;
+  instantDB.transact(
+    instantTx.appState[APP_STATE_ID].update({
+      ownerEmail: instantUser.email,
+      fingerData: JSON.stringify(data),
+      fingerStats: JSON.stringify(stats),
+      settings: JSON.stringify(settings),
+      pullupLog: JSON.stringify(pullupLog),
+      updatedAt: Date.now()
+    })
+  ).catch(e => {
+    console.error('cloud save failed', e);
+    showToast('云端同步失败，本地已保存');
+  });
+}
+
+/* ---------- key / label helpers ---------- */
+function keyFor(hand, finger, part){ return `${hand}-${finger}-${part}`; }
+function zoneLabel(hand, finger, part){
+  if (finger === 'palm'){
+    return part === 'center' ? `${HAND_LABEL[hand]}掌心` : `${HAND_LABEL[hand]}掌心·${FINGER_LABEL[part]}根部`;
+  }
+  return `${HAND_LABEL[hand]}${FINGER_LABEL[finger]}·${PART_LABEL[part]}`;
+}
+function thresholdFor(key){
+  const t = settings.thresholds || {};
+  return (t[key] != null) ? t[key] : (t.default != null ? t.default : 2);
+}
+function getState(ts, now, key){
+  if (!ts) return 'normal';
+  const days = (now - ts) / 86400000;
+  return days < thresholdFor(key) ? 'fresh' : 'healing';
+}
+
+/* ---------- color helpers ---------- */
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function hexToRgb(hex){
+  hex = hex.replace('#','').trim();
+  if (hex.length === 3) hex = hex.split('').map(c => c+c).join('');
+  const num = parseInt(hex, 16);
+  return { r:(num>>16)&255, g:(num>>8)&255, b:num&255 };
+}
+function mixColor(hexA, hexB, t){
+  const a = hexToRgb(hexA), b = hexToRgb(hexB);
+  const r = Math.round(a.r + (b.r-a.r)*t);
+  const g = Math.round(a.g + (b.g-a.g)*t);
+  const bl = Math.round(a.b + (b.b-a.b)*t);
+  return `rgb(${r},${g},${bl})`;
+}
+function luminanceOf(rgbStr){
+  const m = rgbStr.match(/\d+/g).map(Number);
+  return 0.299*m[0] + 0.587*m[1] + 0.114*m[2];
+}
+function zoneFillColor(state, days, threshold){
+  // always fade toward a fixed LIGHT color, independent of light/dark theme,
+  // so "lighter = more days healed" stays true no matter which theme is active
+  if (state === 'fresh'){
+    const t = Math.min(1, days / Math.max(threshold,1)) * 0.62;
+    return mixColor(cssVar('--red'), FADE_TARGET, t);
+  }
+  if (state === 'healing'){
+    const capExtra = Math.max(threshold, 2);
+    const t = Math.min(1, (days - threshold) / capExtra) * 0.55;
+    return mixColor(cssVar('--amber'), FADE_TARGET, t);
+  }
+  return null;
+}
+
+/* ---------- hand SVG build (geometry is fully mirrored beforehand, so text never flips) ---------- */
+function zoneMarkup(finger, part, x, y, w, rectH, rx, cx, showNail){
+  const numY = y + rectH*0.74; // tape sits near the joint (upper part), number stays clear below it
+  return `<g class="zone state-normal" data-finger="${finger}" data-part="${part}">
+    <rect class="finger-shape" x="${x.toFixed ? x.toFixed(1) : x}" y="${y.toFixed(1)}" width="${w}" height="${rectH.toFixed(1)}" rx="${rx}"></rect>
+    ${showNail ? `<ellipse class="nail" cx="${cx.toFixed(1)}" cy="${(y+9).toFixed(1)}" rx="${(w*0.30).toFixed(1)}" ry="${Math.min(7, rectH*0.16).toFixed(1)}"></ellipse>` : ''}
+    <rect class="tape" x="${(x-2.5).toFixed(1)}" y="${(y+rectH*0.12).toFixed(1)}" width="${(w+5).toFixed(1)}" height="${(rectH*0.34).toFixed(1)}" rx="3"></rect>
+    <text class="day-num" x="${cx.toFixed(1)}" y="${numY.toFixed(1)}" text-anchor="middle" dominant-baseline="central"></text>
+  </g>`;
+}
+function buildFingerZones(f, geomSet){
+  const g = geomSet[f];
+  const cx = g.x + g.w/2;
+  const cy = g.y + g.h;
+  const segs = SEGMENTS[f];
+  const props = SEG_PROPORTIONS[segs.length];
+  const gap = 2.4;
+  let curY = g.y;
+  let inner = '';
+  segs.forEach((part, idx) => {
+    const segH = g.h * props[idx];
+    const rectH = segH - gap;
+    const rx = Math.min(g.w/2, 7);
+    inner += zoneMarkup(f, part, g.x, curY, g.w, rectH, rx, cx, idx === 0);
+    curY += segH;
+  });
+  return `<g class="finger-rotate" transform="rotate(${g.rot} ${cx} ${cy})">${inner}</g>`;
+}
+function buildPalmBackdrop(rect){
+  return `<rect class="palm-backdrop" x="${rect.x}" y="${rect.y}" width="${rect.w}" height="${rect.h}" rx="${rect.rx}"></rect>`;
+}
+function buildPalmZones(palmZonesSet){
+  return palmZonesSet.map(z => {
+    const fontSize = z.part === 'center' ? 15 : 9;
+    return `<g class="zone state-normal" data-finger="palm" data-part="${z.part}">
+      <circle class="finger-shape palm-shape" cx="${z.cx}" cy="${z.cy}" r="${z.r}"></circle>
+      <text class="day-num" x="${z.cx}" y="${z.cy}" text-anchor="middle" dominant-baseline="central" style="font-size:${fontSize}px;"></text>
+    </g>`;
+  }).join('');
+}
+function buildHandInner(geomSet, palmZonesSet, palmBackdropRect){
+  let s = buildPalmBackdrop(palmBackdropRect);
+  s += buildPalmZones(palmZonesSet);
+  for (const f of FINGER_ORDER){
+    s += buildFingerZones(f, geomSet);
+  }
+  return s;
+}
+function renderHands(){
+  document.getElementById('left-hand').innerHTML = buildHandInner(GEOM, PALM_ZONES, PALM_BACKDROP);
+  document.getElementById('right-hand').innerHTML = buildHandInner(GEOM_MIRRORED, PALM_ZONES_MIRRORED, PALM_BACKDROP_MIRRORED);
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
+}
+
+/* ---------- fingers tab ---------- */
+function renderFingers(){
+  const now = Date.now();
+  const rows = [];
+
+  ['left','right'].forEach(hand => {
+    ALL_ZONES.forEach(({ finger, part }) => {
+      const key = keyFor(hand, finger, part);
+      const ts = data[key];
+      const state = getState(ts, now, key);
+      const zoneEl = document.querySelector(`#${hand}-hand .zone[data-finger="${finger}"][data-part="${part}"]`);
+      if (zoneEl){
+        zoneEl.classList.remove('state-normal','state-fresh','state-healing');
+        zoneEl.classList.add('state-' + state);
+        const shape = zoneEl.querySelector('.finger-shape');
+        const dayText = zoneEl.querySelector('.day-num');
+        if (state === 'normal'){
+          if (shape) shape.style.fill = '';
+          if (dayText) dayText.textContent = '';
+        } else {
+          const days = Math.floor((now - ts) / 86400000);
+          const color = zoneFillColor(state, days, thresholdFor(key));
+          if (shape) shape.style.fill = color;
+          if (dayText){
+            dayText.textContent = String(days + 1);
+            dayText.style.fill = luminanceOf(color) > 150 ? '#2E2B27' : '#FFFFFF';
+          }
+        }
+      }
+      if (state !== 'normal'){
+        const days = Math.floor((now - ts) / 86400000);
+        rows.push({ hand, finger, part, state, days });
+      }
+    });
+  });
+
+  rows.sort((a,b) => {
+    if (a.state !== b.state) return a.state === 'fresh' ? -1 : 1;
+    return b.days - a.days;
+  });
+
+  document.getElementById('summary-title').textContent = `需要留意 (${rows.length})`;
+  const list = document.getElementById('summary-list');
+  const empty = document.getElementById('summary-empty');
+
+  if (rows.length === 0){
+    list.style.display = 'none';
+    empty.style.display = 'block';
+  } else {
+    list.style.display = 'block';
+    empty.style.display = 'none';
+    list.innerHTML = rows.map(r => `
+      <div class="summary-row" data-hand="${r.hand}" data-finger="${r.finger}" data-part="${r.part}">
+        <span class="row-dot dot-${r.state}"></span>
+        <span class="row-label">${zoneLabel(r.hand, r.finger, r.part)}</span>
+        <span class="row-days">第 ${r.days + 1} 天</span>
+        <span class="row-tag tag-${r.state}">${r.state === 'fresh' ? '受伤破皮中' : '需保护'}</span>
+      </div>
+    `).join('');
+  }
+}
+
+function updatePartThresholdChips(key){
+  const custom = settings.thresholds[key];
+  document.querySelectorAll('#part-threshold-chips .chip').forEach(btn => {
+    const val = btn.dataset.days;
+    const isActive = (val === 'default') ? (custom == null) : (Number(val) === custom);
+    btn.classList.toggle('active', isActive);
+  });
+}
+
+function openSheet(hand, finger, part){
+  currentKey = { hand, finger, part };
+  const key = keyFor(hand, finger, part);
+  const now = Date.now();
+  const ts = data[key];
+  const state = getState(ts, now, key);
+  const days = ts ? Math.floor((now - ts) / 86400000) : 0;
+
+  document.getElementById('sheet-title').textContent = zoneLabel(hand, finger, part);
+  document.getElementById('sheet-sub').textContent =
+    state === 'fresh'
+      ? `第 ${days + 1} 天 · 受伤破皮中`
+      : `第 ${days + 1} 天 · 已过恢复期，建议贴保护贴`;
+
+  updatePartThresholdChips(key);
+
+  document.getElementById('sheet').classList.add('open');
+  document.getElementById('sheet-backdrop').classList.add('open');
+}
+function closeSheet(){
+  document.getElementById('sheet').classList.remove('open');
+  document.getElementById('sheet-backdrop').classList.remove('open');
+  currentKey = null;
+}
+
+function bumpStat(key){
+  stats[key] = (stats[key] || 0) + 1;
+  saveStats();
+}
+
+function handleZoneTap(hand, finger, part, el){
+  const key = keyFor(hand, finger, part);
+  const state = getState(data[key], Date.now(), key);
+
+  if (state === 'normal'){
+    data[key] = Date.now();
+    saveData();
+    bumpStat(key);
+    renderFingers();
+    el.classList.add('tap-anim');
+    setTimeout(() => el.classList.remove('tap-anim'), 280);
+    showToast(`已记录 · ${zoneLabel(hand, finger, part)}`);
+  } else {
+    openSheet(hand, finger, part);
+  }
+}
+
+function attachHandListeners(){
+  ['left','right'].forEach(hand => {
+    const svg = document.getElementById(`${hand}-hand`);
+    svg.addEventListener('click', (e) => {
+      const zone = e.target.closest('.zone');
+      if (!zone) return;
+      handleZoneTap(hand, zone.dataset.finger, zone.dataset.part, zone);
+    });
+  });
+
+  document.getElementById('summary-list').addEventListener('click', (e) => {
+    const row = e.target.closest('.summary-row');
+    if (!row) return;
+    openSheet(row.dataset.hand, row.dataset.finger, row.dataset.part);
+  });
+}
+
+function attachSheetListeners(){
+  document.getElementById('sheet-heal').addEventListener('click', () => {
+    if (!currentKey) return;
+    const key = keyFor(currentKey.hand, currentKey.finger, currentKey.part);
+    delete data[key];
+    saveData();
+    renderFingers();
+    showToast('已标记为恢复');
+    closeSheet();
+  });
+
+  document.getElementById('sheet-reinjure').addEventListener('click', () => {
+    if (!currentKey) return;
+    const key = keyFor(currentKey.hand, currentKey.finger, currentKey.part);
+    data[key] = Date.now();
+    saveData();
+    bumpStat(key);
+    renderFingers();
+    showToast('已重新计时');
+    closeSheet();
+  });
+
+  document.getElementById('part-threshold-chips').addEventListener('click', (e) => {
+    const btn = e.target.closest('.chip');
+    if (!btn || !currentKey) return;
+    const key = keyFor(currentKey.hand, currentKey.finger, currentKey.part);
+    if (btn.dataset.days === 'default'){
+      delete settings.thresholds[key];
+    } else {
+      settings.thresholds[key] = Number(btn.dataset.days);
+    }
+    saveSettings();
+    updatePartThresholdChips(key);
+    renderFingers();
+    openSheet(currentKey.hand, currentKey.finger, currentKey.part);
+  });
+
+  document.getElementById('sheet-cancel').addEventListener('click', closeSheet);
+  document.getElementById('sheet-backdrop').addEventListener('click', () => {
+    closeSheet();
+    closeThresholdSheet();
+  });
+}
+
+function attachClearAllListener(){
+  const btn = document.getElementById('clear-all-btn');
+  btn.addEventListener('click', () => {
+    if (!btn.classList.contains('confirming')){
+      btn.classList.add('confirming');
+      btn.textContent = '再点一次确认清空';
+      clearTimeout(confirmClearTimer);
+      confirmClearTimer = setTimeout(() => {
+        btn.classList.remove('confirming');
+        btn.textContent = '清空当前手指状态';
+      }, 3000);
+    } else {
+      clearTimeout(confirmClearTimer);
+      btn.classList.remove('confirming');
+      btn.textContent = '清空当前手指状态';
+      data = {};
+      saveData();
+      renderFingers();
+      showToast('已清空当前状态');
+    }
+  });
+}
+
+/* ---------- default threshold sheet ---------- */
+function updateDefaultThresholdUI(){
+  document.getElementById('threshold-btn').textContent = `默认恢复天数：${settings.thresholds.default} 天 ⌄`;
+  document.querySelectorAll('.threshold-option').forEach(btn => {
+    btn.classList.toggle('active', Number(btn.dataset.days) === settings.thresholds.default);
+  });
+}
+function openThresholdSheet(){
+  updateDefaultThresholdUI();
+  document.getElementById('threshold-sheet').classList.add('open');
+  document.getElementById('sheet-backdrop').classList.add('open');
+}
+function closeThresholdSheet(){
+  document.getElementById('threshold-sheet').classList.remove('open');
+  document.getElementById('sheet-backdrop').classList.remove('open');
+}
+function attachThresholdListeners(){
+  document.getElementById('threshold-btn').addEventListener('click', openThresholdSheet);
+  document.getElementById('threshold-cancel').addEventListener('click', closeThresholdSheet);
+  document.getElementById('threshold-options').addEventListener('click', (e) => {
+    const btn = e.target.closest('.threshold-option');
+    if (!btn) return;
+    settings.thresholds.default = Number(btn.dataset.days);
+    saveSettings();
+    updateDefaultThresholdUI();
+    renderFingers();
+    showToast(`默认恢复天数已设为 ${settings.thresholds.default} 天`);
+    closeThresholdSheet();
+  });
+}
+
+/* ---------- theme ---------- */
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme', settings.theme === 'dark' ? 'dark' : 'light');
+  document.getElementById('theme-toggle').textContent = settings.theme === 'dark' ? '☀️' : '🌙';
+}
+function attachThemeToggle(){
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    settings.theme = settings.theme === 'dark' ? 'light' : 'dark';
+    applyTheme();
+    saveSettings();
+    renderFingers();
+  });
+}
+
+/* ---------- shared: date formatting ---------- */
+function todayStr(){
+  const d = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function formatShortDate(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------- trend chart (weight × sets, now shown on the 统计 tab, driven by pull-up log) ---------- */
+function renderTrendChart(){
+  const card = document.getElementById('trend-chart-card');
+  const box = document.getElementById('trend-chart');
+
+  if (pullupLog.length === 0){
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+
+  const dayWeight = {};
+  const daySets = {};
+  const dayTotal = {};
+  pullupLog.forEach(p => {
+    const total = p.repsPerSet.reduce((s,n) => s+n, 0);
+    if (!dayWeight[p.date] || p.weight > dayWeight[p.date]) dayWeight[p.date] = p.weight;
+    daySets[p.date] = (daySets[p.date] || 0) + p.repsPerSet.length;
+    dayTotal[p.date] = (dayTotal[p.date] || 0) + total;
+  });
+  const dates = Object.keys(dayWeight).sort();
+  const points = dates.map(date => ({ date, weight: dayWeight[date], sets: daySets[date], total: dayTotal[date] }));
+
+  if (points.length < 2){
+    box.innerHTML = '<p class="chart-empty-hint">再记录一次就能看到负重和次数的变化曲线了</p>';
+    return;
+  }
+
+  const W = 300, H = 130, padX = 14, padY = 16;
+  const weights = points.map(p => p.weight);
+  const minW = Math.min(...weights);
+  const maxW = Math.max(...weights);
+  const rangeW = (maxW - minW) || 1;
+  const maxTotal = Math.max(...points.map(p => p.total)) || 1;
+
+  const xStep = (W - padX * 2) / (points.length - 1);
+  const barWidth = Math.min(18, xStep * 0.5);
+  const plotH = H - padY * 2;
+
+  const coords = points.map((p, i) => {
+    const x = padX + i * xStep;
+    const yWeight = H - padY - ((p.weight - minW) / rangeW) * plotH;
+    const barH = (p.total / maxTotal) * plotH * 0.85;
+    return { x, yWeight, barH, weight: p.weight, sets: p.sets, total: p.total, date: p.date };
+  });
+
+  const bars = coords.map(c =>
+    `<rect class="chart-bar" data-date="${c.date}" data-weight="${c.weight}" data-sets="${c.sets}" data-total="${c.total}" x="${(c.x - barWidth/2).toFixed(1)}" y="${(H - padY - c.barH).toFixed(1)}" width="${barWidth.toFixed(1)}" height="${c.barH.toFixed(1)}" rx="2.5"></rect>`
+  ).join('');
+
+  const linePath = coords.map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x.toFixed(1)} ${c.yWeight.toFixed(1)}`).join(' ');
+  const dots = coords.map(c =>
+    `<circle class="chart-dot${c.weight === maxW ? ' chart-dot-pb' : ''}" data-date="${c.date}" data-weight="${c.weight}" data-sets="${c.sets}" data-total="${c.total}" cx="${c.x.toFixed(1)}" cy="${c.yWeight.toFixed(1)}" r="4.5"></circle>`
+  ).join('');
+
+  box.innerHTML = `
+    <div class="chart-legend">
+      <span><i class="legend-swatch swatch-line"></i>负重(kg)</span>
+      <span><i class="legend-swatch swatch-bar"></i>次数</span>
+    </div>
+    <div class="chart-plot">
+      <span class="chart-y-max">${maxW}kg</span>
+      <span class="chart-y-min">${minW}kg</span>
+      <svg viewBox="0 0 ${W} ${H}" class="chart-svg" preserveAspectRatio="none">
+        ${bars}
+        <path class="chart-line" d="${linePath}"></path>
+        ${dots}
+      </svg>
+    </div>
+    <div class="chart-x-labels"><span>${formatShortDate(points[0].date)}</span><span>${formatShortDate(points[points.length-1].date)}</span></div>
+  `;
+}
+function attachTrendChartListener(){
+  document.getElementById('trend-chart').addEventListener('click', (e) => {
+    const el = e.target.closest('[data-date]');
+    if (!el) return;
+    showToast(`${formatShortDate(el.dataset.date)} · ${el.dataset.weight}kg · ${el.dataset.sets}组 · 共${el.dataset.total}次`);
+  });
+}
+
+/* ---------- stats tab ---------- */
+function renderStats(){
+  renderTrendChart();
+
+  const entries = [];
+  ['left','right'].forEach(hand => ALL_ZONES.forEach(({ finger, part }) => {
+    const key = keyFor(hand, finger, part);
+    const count = stats[key] || 0;
+    if (count > 0) entries.push({ hand, finger, part, count });
+  }));
+  entries.sort((a,b) => b.count - a.count);
+
+  const total = entries.reduce((s,e) => s + e.count, 0);
+  document.getElementById('stats-total-num').textContent = total;
+
+  const list = document.getElementById('stats-list');
+  const empty = document.getElementById('stats-empty');
+
+  if (entries.length === 0){
+    list.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+  list.style.display = 'block';
+  empty.style.display = 'none';
+
+  const max = entries[0].count;
+  list.innerHTML = entries.map(e => `
+    <div class="stats-row">
+      <span class="stats-label">${zoneLabel(e.hand, e.finger, e.part)}</span>
+      <div class="stats-bar-track"><div class="stats-bar-fill" style="width:${Math.max(6, Math.round(e.count/max*100))}%"></div></div>
+      <span class="stats-count">${e.count}</span>
+    </div>
+  `).join('');
+}
+function attachStatsListeners(){
+  const btn = document.getElementById('reset-stats-btn');
+  btn.addEventListener('click', () => {
+    if (!btn.classList.contains('confirming')){
+      btn.classList.add('confirming');
+      btn.textContent = '再点一次确认重置';
+      clearTimeout(confirmResetStatsTimer);
+      confirmResetStatsTimer = setTimeout(() => {
+        btn.classList.remove('confirming');
+        btn.textContent = '重置统计';
+      }, 3000);
+    } else {
+      clearTimeout(confirmResetStatsTimer);
+      btn.classList.remove('confirming');
+      btn.textContent = '重置统计';
+      stats = {};
+      saveStats();
+      renderStats();
+      showToast('统计已重置');
+    }
+  });
+  attachTrendChartListener();
+}
+
+/* ---------- pull-up tab ---------- */
+function renderPullups(){
+  const list = document.getElementById('pullup-list');
+  const empty = document.getElementById('pullup-empty');
+  const pager = document.getElementById('pullup-pagination');
+
+  if (pullupLog.length === 0){
+    list.style.display = 'none';
+    empty.style.display = 'block';
+    pager.innerHTML = '';
+    document.getElementById('pb-value').textContent = '--';
+    return;
+  }
+  list.style.display = 'block';
+  empty.style.display = 'none';
+
+  const bestWeight = Math.max(...pullupLog.map(p => p.weight));
+  document.getElementById('pb-value').textContent = `${bestWeight} kg`;
+
+  const sorted = [...pullupLog].sort((a,b) => b.date.localeCompare(a.date) || b.id - a.id);
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PULLUP_PAGE_SIZE));
+  if (pullupPage > totalPages) pullupPage = totalPages;
+  if (pullupPage < 1) pullupPage = 1;
+  const pageItems = sorted.slice((pullupPage-1)*PULLUP_PAGE_SIZE, pullupPage*PULLUP_PAGE_SIZE);
+
+  list.innerHTML = pageItems.map(p => {
+    const d = new Date(p.date + 'T00:00:00');
+    const dateLabel = `${d.getMonth()+1}月${d.getDate()}日`;
+    const totalReps = p.repsPerSet.reduce((s,n) => s+n, 0);
+    const setsLabel = p.repsPerSet.length > 1
+      ? `${p.repsPerSet.join('+')}次（共${totalReps}次）`
+      : `${totalReps}次`;
+    return `<div class="pullup-row">
+      <div class="pullup-main">
+        <span class="pullup-date">${dateLabel}</span>
+        <span class="pullup-detail">${p.weight}kg × ${setsLabel}</span>
+        ${p.note ? `<span class="pullup-note">${escapeHtml(p.note)}</span>` : ''}
+      </div>
+      <button class="pullup-del" data-id="${p.id}">×</button>
+    </div>`;
+  }).join('');
+
+  if (totalPages <= 1){
+    pager.innerHTML = '';
+  } else {
+    pager.innerHTML = `
+      <button class="page-btn" id="pu-prev" ${pullupPage === 1 ? 'disabled' : ''}>‹</button>
+      <span class="page-info">第 ${pullupPage} / ${totalPages} 页</span>
+      <button class="page-btn" id="pu-next" ${pullupPage === totalPages ? 'disabled' : ''}>›</button>
+    `;
+    const prevBtn = document.getElementById('pu-prev');
+    const nextBtn = document.getElementById('pu-next');
+    if (prevBtn) prevBtn.addEventListener('click', () => { pullupPage--; renderPullups(); });
+    if (nextBtn) nextBtn.addEventListener('click', () => { pullupPage++; renderPullups(); });
+  }
+}
+
+function attachPullupListeners(){
+  document.getElementById('pu-date').value = todayStr();
+
+  document.getElementById('pu-add-btn').addEventListener('click', () => {
+    const date = document.getElementById('pu-date').value || todayStr();
+    const weight = parseFloat(document.getElementById('pu-weight').value);
+    const repsRaw = document.getElementById('pu-reps').value.trim();
+    const note = document.getElementById('pu-note').value.trim();
+
+    const repsPerSet = repsRaw
+      .split(/[,，\s]+/)
+      .map(s => parseInt(s, 10))
+      .filter(n => Number.isInteger(n) && n > 0);
+
+    if (isNaN(weight)){ showToast('先填一下负重'); return; }
+    if (repsPerSet.length === 0){ showToast('填一下每组次数，比如 5,5,4'); return; }
+
+    pullupLog.push({ id: Date.now(), date, weight, repsPerSet, note });
+    savePullups();
+    pullupPage = 1;
+
+    document.getElementById('pu-weight').value = '';
+    document.getElementById('pu-reps').value = '';
+    document.getElementById('pu-note').value = '';
+
+    renderPullups();
+    showToast('已记录');
+  });
+
+  document.getElementById('pullup-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('.pullup-del');
+    if (!btn) return;
+    const id = Number(btn.dataset.id);
+    pullupLog = pullupLog.filter(p => p.id !== id);
+    savePullups();
+    renderPullups();
+  });
+}
+
+/* ---------- tabs ---------- */
+function switchTab(tab){
+  activeTab = tab;
+  document.querySelectorAll('.tab-panel').forEach(p => { p.hidden = (p.id !== `tab-${tab}`); });
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+
+  const h = TAB_HEADER[tab];
+  document.getElementById('header-eyebrow').textContent = h.eyebrow;
+  document.getElementById('header-title').textContent = h.title;
+  document.getElementById('header-sub').textContent = h.sub;
+
+  document.querySelector('.app-scroll').scrollTop = 0;
+
+  if (tab === 'stats') renderStats();
+  if (tab === 'pullup') renderPullups();
+}
+function attachTabListeners(){
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+}
+
+/* ---------- status bar clock ---------- */
+function updateClock(){
+  const now = new Date();
+  const h = now.getHours().toString().padStart(2,'0');
+  const m = now.getMinutes().toString().padStart(2,'0');
+  document.getElementById('clock').textContent = `${h}:${m}`;
+}
+
+/* ---------- init ---------- */
+function init(){
+  loadAll();
+  applyTheme();
+
+  renderHands();
+  attachHandListeners();
+  attachSheetListeners();
+  attachThresholdListeners();
+  attachClearAllListener();
+  attachThemeToggle();
+  attachStatsListeners();
+  attachPullupListeners();
+  attachTabListeners();
+
+  updateDefaultThresholdUI();
+  renderFingers();
+
+  updateClock();
+  setInterval(updateClock, 30000);
+  setInterval(renderFingers, 60000);
+
+  initInstant();
+}
+
+init();
+</script>
+</body>
+</html>
