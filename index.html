@@ -484,6 +484,27 @@ html,body{
   color:var(--ink-soft);
   margin-bottom:8px;
 }
+.gran-toggle{
+  display:flex;
+  gap:6px;
+  margin-bottom:12px;
+}
+.gran-btn{
+  flex:1;
+  padding:6px 0;
+  border:1.5px solid var(--line);
+  border-radius:10px;
+  background:var(--surface);
+  color:var(--ink-soft);
+  font-size:12px;
+  font-weight:600;
+  font-family:inherit;
+}
+.gran-btn.active{
+  border-color:var(--sage);
+  background:var(--sage);
+  color:#fff;
+}
 .legend-swatch{
   width:9px;
   height:9px;
@@ -956,7 +977,13 @@ html,body{
     <!-- TAB 3: 统计 -->
     <section id="tab-stats" class="tab-panel" hidden>
       <div class="chart-card" id="trend-chart-card" style="display:none;">
-        <p class="section-title" style="margin-bottom:8px;">负重 × 次数趋势</p>
+        <p class="section-title" style="margin-bottom:8px;">负重 × 次数趋势<span id="trend-chart-gran"></span></p>
+        <div class="gran-toggle" id="gran-toggle">
+          <button class="gran-btn" data-gran="auto">自动</button>
+          <button class="gran-btn" data-gran="day">按天</button>
+          <button class="gran-btn" data-gran="week">按周</button>
+          <button class="gran-btn" data-gran="month">按月</button>
+        </div>
         <div id="trend-chart"></div>
         <p class="chart-tap-hint">点一下柱子或圆点，看那天的详细数据</p>
       </div>
@@ -1116,7 +1143,7 @@ const TAB_HEADER = {
 
 let data = {};
 let stats = {};
-let settings = { theme: 'dark', thresholds: { default: 2 } };
+let settings = { theme: 'dark', thresholds: { default: 2 }, chartGranularity: 'auto' };
 let pullupLog = [];
 let pullupPage = 1;
 const PULLUP_PAGE_SIZE = 8;
@@ -1153,6 +1180,7 @@ function loadAll(){
   }
   if (!settings.thresholds) settings.thresholds = { default: 2 };
   if (settings.thresholds.default == null) settings.thresholds.default = 2;
+  if (!settings.chartGranularity) settings.chartGranularity = 'auto';
   pullupLog = safeGet(PULLUP_KEY, []);
 }
 function saveData(){ safeSet(DATA_KEY, data); queueCloudSave(); }
@@ -1669,9 +1697,35 @@ function escapeHtml(s){
 }
 
 /* ---------- trend chart (weight × sets, now shown on the 统计 tab, driven by pull-up log) ---------- */
+function bucketWeekStart(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDay();
+  const diff = day === 0 ? 6 : day - 1; // week starts Monday
+  d.setDate(d.getDate() - diff);
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function bucketMonthStart(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-01`;
+}
+function formatChartLabel(dateStr, granularity){
+  const d = new Date(dateStr + 'T00:00:00');
+  if (granularity === 'month') return `${d.getMonth()+1}月`;
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+function formatDetailLabel(dateStr, granularity){
+  const d = new Date(dateStr + 'T00:00:00');
+  if (granularity === 'month') return `${d.getFullYear()}年${d.getMonth()+1}月`;
+  if (granularity === 'week') return `${d.getMonth()+1}/${d.getDate()}那周`;
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
 function renderTrendChart(){
   const card = document.getElementById('trend-chart-card');
   const box = document.getElementById('trend-chart');
+  const granLabel = document.getElementById('trend-chart-gran');
 
   if (pullupLog.length === 0){
     card.style.display = 'none';
@@ -1679,17 +1733,39 @@ function renderTrendChart(){
   }
   card.style.display = 'block';
 
-  const dayWeight = {};
-  const daySets = {};
-  const dayTotal = {};
+  const allDates = pullupLog.map(p => p.date).sort();
+  const spanDays = (new Date(allDates[allDates.length-1]) - new Date(allDates[0])) / 86400000;
+
+  let granularity;
+  if (settings.chartGranularity && settings.chartGranularity !== 'auto'){
+    granularity = settings.chartGranularity;
+  } else {
+    granularity = 'day';
+    if (spanDays > 90) granularity = 'month';
+    else if (spanDays > 21) granularity = 'week';
+  }
+  const bucketFn = granularity === 'month' ? bucketMonthStart : granularity === 'week' ? bucketWeekStart : (d => d);
+
+  updateGranToggle();
+
+  const buckets = {};
   pullupLog.forEach(p => {
+    const key = bucketFn(p.date);
     const total = p.repsPerSet.reduce((s,n) => s+n, 0);
-    if (!dayWeight[p.date] || p.weight > dayWeight[p.date]) dayWeight[p.date] = p.weight;
-    daySets[p.date] = (daySets[p.date] || 0) + p.repsPerSet.length;
-    dayTotal[p.date] = (dayTotal[p.date] || 0) + total;
+    if (!buckets[key]) buckets[key] = { weight: 0, sets: 0, total: 0 };
+    buckets[key].weight = Math.max(buckets[key].weight, p.weight);
+    buckets[key].sets += p.repsPerSet.length;
+    buckets[key].total += total;
   });
-  const dates = Object.keys(dayWeight).sort();
-  const points = dates.map(date => ({ date, weight: dayWeight[date], sets: daySets[date], total: dayTotal[date] }));
+
+  let keys = Object.keys(buckets).sort();
+  const MAX_POINTS = 18; // safety cap so it never gets too cramped even with years of data
+  if (keys.length > MAX_POINTS) keys = keys.slice(keys.length - MAX_POINTS);
+
+  const points = keys.map(k => ({ date: k, weight: buckets[k].weight, sets: buckets[k].sets, total: buckets[k].total }));
+
+  const granText = { day:'按天', week:'按周', month:'按月' }[granularity];
+  granLabel.textContent = points.length > 1 ? `（${granText}）` : '';
 
   if (points.length < 2){
     box.innerHTML = '<p class="chart-empty-hint">再记录一次就能看到负重和次数的变化曲线了</p>';
@@ -1715,12 +1791,12 @@ function renderTrendChart(){
   });
 
   const bars = coords.map(c =>
-    `<rect class="chart-bar" data-date="${c.date}" data-weight="${c.weight}" data-sets="${c.sets}" data-total="${c.total}" x="${(c.x - barWidth/2).toFixed(1)}" y="${(H - padY - c.barH).toFixed(1)}" width="${barWidth.toFixed(1)}" height="${c.barH.toFixed(1)}" rx="2.5"></rect>`
+    `<rect class="chart-bar" data-date="${c.date}" data-gran="${granularity}" data-weight="${c.weight}" data-sets="${c.sets}" data-total="${c.total}" x="${(c.x - barWidth/2).toFixed(1)}" y="${(H - padY - c.barH).toFixed(1)}" width="${barWidth.toFixed(1)}" height="${c.barH.toFixed(1)}" rx="2.5"></rect>`
   ).join('');
 
   const linePath = coords.map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x.toFixed(1)} ${c.yWeight.toFixed(1)}`).join(' ');
   const dots = coords.map(c =>
-    `<circle class="chart-dot${c.weight === maxW ? ' chart-dot-pb' : ''}" data-date="${c.date}" data-weight="${c.weight}" data-sets="${c.sets}" data-total="${c.total}" cx="${c.x.toFixed(1)}" cy="${c.yWeight.toFixed(1)}" r="4.5"></circle>`
+    `<circle class="chart-dot${c.weight === maxW ? ' chart-dot-pb' : ''}" data-date="${c.date}" data-gran="${granularity}" data-weight="${c.weight}" data-sets="${c.sets}" data-total="${c.total}" cx="${c.x.toFixed(1)}" cy="${c.yWeight.toFixed(1)}" r="4.5"></circle>`
   ).join('');
 
   box.innerHTML = `
@@ -1737,14 +1813,30 @@ function renderTrendChart(){
         ${dots}
       </svg>
     </div>
-    <div class="chart-x-labels"><span>${formatShortDate(points[0].date)}</span><span>${formatShortDate(points[points.length-1].date)}</span></div>
+    <div class="chart-x-labels"><span>${formatChartLabel(points[0].date, granularity)}</span><span>${formatChartLabel(points[points.length-1].date, granularity)}</span></div>
   `;
+}
+function updateGranToggle(){
+  document.querySelectorAll('#gran-toggle .gran-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.gran === (settings.chartGranularity || 'auto'));
+  });
 }
 function attachTrendChartListener(){
   document.getElementById('trend-chart').addEventListener('click', (e) => {
     const el = e.target.closest('[data-date]');
     if (!el) return;
-    showToast(`${formatShortDate(el.dataset.date)} · ${el.dataset.weight}kg · ${el.dataset.sets}组 · 共${el.dataset.total}次`);
+    const gran = el.dataset.gran;
+    const label = formatDetailLabel(el.dataset.date, gran);
+    const weightPrefix = gran === 'day' ? '' : '最高';
+    showToast(`${label} · ${weightPrefix}${el.dataset.weight}kg · 共${el.dataset.sets}组 · 共${el.dataset.total}次`);
+  });
+
+  document.getElementById('gran-toggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('.gran-btn');
+    if (!btn) return;
+    settings.chartGranularity = btn.dataset.gran;
+    saveSettings();
+    renderTrendChart();
   });
 }
 
