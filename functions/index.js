@@ -60,7 +60,7 @@ exports.requestVerificationCode = onCall({ secrets: [RESEND_API_KEY] }, async (r
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'Trading Journal <onboarding@resend.dev>',
+      from: '攀岩记录 <onboarding@resend.dev>',
       to: [email],
       subject: `你的登录验证码：${code}`,
       html: `<div style="font-family: sans-serif; padding: 24px;">
