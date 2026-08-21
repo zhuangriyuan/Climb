@@ -1076,7 +1076,10 @@ html,body{
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { init as initInstantDB, tx as instantTx, id as instantId } from 'https://esm.sh/@instantdb/core';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js';
+import { getAuth, onAuthStateChanged, signInWithCustomToken, signOut } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
+import { getFirestore, doc, onSnapshot, setDoc } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-functions.js';
 
 const DATA_KEY = 'fc_finger_data';
 const STATS_KEY = 'fc_finger_stats';
@@ -1188,35 +1191,43 @@ function saveStats(){ safeSet(STATS_KEY, stats); queueCloudSave(); }
 function saveSettings(){ safeSet(SETTINGS_KEY, settings); queueCloudSave(); }
 function savePullups(){ safeSet(PULLUP_KEY, pullupLog); queueCloudSave(); }
 
-/* ---------- InstantDB cloud sync (email login, gated by permission rules — see chat for the rules JSON to paste in the dashboard) ---------- */
-const INSTANT_APP_ID = 'c9837502-d9ae-4649-9830-86347a4c00ae';
-const ALLOWED_EMAIL = 'zhuangriyuan@gmail.com';
-const APP_STATE_ID = '2f19c9d2-6b0a-4b7a-9c0e-8a1f00000001'; // fixed row id (valid UUID) — this whole app is single-user, so there's only ever one row
+/* ---------- Firebase cloud sync (verification-code login via Cloud Functions — see instantdb-migration notes) ---------- */
+// Fill this in from Firebase Console → Project settings → General → Your apps → Web app.
+const firebaseConfig = {
+  apiKey: "AIzaSyAXNzwHjw6PA21ckyu0HWaO1YBfKpiZcl8",
+  authDomain: "climb-e34ad.firebaseapp.com",
+  projectId: "climb-e34ad",
+  storageBucket: "climb-e34ad.firebasestorage.app",
+  messagingSenderId: "140950554247",
+  appId: "1:140950554247:web:d76b76bb92b315c9f85a22",
+  measurementId: "G-RD5B1P123H",
+};
+const ALLOWED_EMAIL = 'zhuangriyuan@gmail.com'; // pre-fills the login field only — the real allowlist enforcement lives in the Cloud Function
 
-let instantDB = null;
-let instantUser = null;
+const fbApp = initializeApp(firebaseConfig);
+const fbAuth = getAuth(fbApp);
+const firestore = getFirestore(fbApp);
+const fbFunctions = getFunctions(fbApp);
+const callRequestVerificationCode = httpsCallable(fbFunctions, 'requestVerificationCode');
+const callVerifyCodeAndSignIn = httpsCallable(fbFunctions, 'verifyCodeAndSignIn');
+
+let fbUser = null;
 let cloudSaveTimer = null;
 let applyingCloudUpdate = false;
+let unsubscribeAppState = null;
 
 function initInstant(){
-  try{
-    instantDB = initInstantDB({ appId: INSTANT_APP_ID });
-  }catch(e){
-    console.error('InstantDB init failed', e);
-    document.getElementById('auth-error').textContent = '云端服务加载失败，先离线用着，稍后刷新重试';
-    return;
-  }
-
   const emailInput = document.getElementById('auth-email');
   if (emailInput) emailInput.value = ALLOWED_EMAIL;
 
-  instantDB.subscribeAuth((resp) => {
-    instantUser = resp.user || null;
-    if (instantUser){
+  onAuthStateChanged(fbAuth, (user) => {
+    fbUser = user || null;
+    if (fbUser){
       document.getElementById('auth-overlay').style.display = 'none';
       startCloudSync();
     } else {
       document.getElementById('auth-overlay').style.display = 'flex';
+      if (unsubscribeAppState) { unsubscribeAppState(); unsubscribeAppState = null; }
     }
   });
 
@@ -1226,11 +1237,11 @@ function initInstant(){
     errEl.textContent = '';
     if (!email){ errEl.textContent = '先填邮箱'; return; }
     try{
-      await instantDB.auth.sendMagicCode({ email });
+      await callRequestVerificationCode({ email });
       document.getElementById('auth-step-email').style.display = 'none';
       document.getElementById('auth-step-code').style.display = 'block';
     }catch(e){
-      errEl.textContent = '发送失败：' + (e?.body?.message || e?.message || '请重试');
+      errEl.textContent = '发送失败：' + (e?.message || '请重试');
     }
   });
 
@@ -1241,7 +1252,8 @@ function initInstant(){
     errEl.textContent = '';
     if (!code){ errEl.textContent = '填一下验证码'; return; }
     try{
-      await instantDB.auth.signInWithMagicCode({ email, code });
+      const result = await callVerifyCodeAndSignIn({ email, code });
+      await signInWithCustomToken(fbAuth, result.data.token);
     }catch(e){
       errEl.textContent = '验证码不对，再试一次';
     }
@@ -1259,17 +1271,16 @@ function initInstant(){
   const signOutBtn = document.getElementById('sign-out-btn');
   if (signOutBtn){
     signOutBtn.addEventListener('click', () => {
-      instantDB.auth.signOut();
+      signOut(fbAuth);
     });
   }
 }
 
 function startCloudSync(){
-  instantDB.subscribeQuery({ appState: {} }, (resp) => {
-    if (resp.error){ console.error('cloud query error', resp.error); return; }
-    const rows = (resp.data && resp.data.appState) || [];
-    const row = rows.find(r => r.id === APP_STATE_ID);
-    if (row){
+  const ref = doc(firestore, 'appState', fbUser.uid);
+  unsubscribeAppState = onSnapshot(ref, (snap) => {
+    if (snap.exists()){
+      const row = snap.data();
       applyingCloudUpdate = true;
       try{
         data = row.fingerData ? JSON.parse(row.fingerData) : {};
@@ -1292,28 +1303,29 @@ function startCloudSync(){
       // first login on this device: push whatever's currently local up to the cloud
       pushCloudState();
     }
+  }, (error) => {
+    console.error('cloud query error', error);
   });
 }
 
 function queueCloudSave(){
   if (applyingCloudUpdate) return; // don't echo cloud->local updates straight back to the cloud
-  if (!instantDB || !instantUser) return;
+  if (!fbUser) return;
   clearTimeout(cloudSaveTimer);
   cloudSaveTimer = setTimeout(pushCloudState, 500);
 }
 
 function pushCloudState(){
-  if (!instantDB || !instantUser) return;
-  instantDB.transact(
-    instantTx.appState[APP_STATE_ID].update({
-      ownerEmail: instantUser.email,
-      fingerData: JSON.stringify(data),
-      fingerStats: JSON.stringify(stats),
-      settings: JSON.stringify(settings),
-      pullupLog: JSON.stringify(pullupLog),
-      updatedAt: Date.now()
-    })
-  ).catch(e => {
+  if (!fbUser) return;
+  const ref = doc(firestore, 'appState', fbUser.uid);
+  setDoc(ref, {
+    ownerEmail: fbUser.email,
+    fingerData: JSON.stringify(data),
+    fingerStats: JSON.stringify(stats),
+    settings: JSON.stringify(settings),
+    pullupLog: JSON.stringify(pullupLog),
+    updatedAt: Date.now()
+  }, { merge: true }).catch(e => {
     console.error('cloud save failed', e);
     showToast('云端同步失败，本地已保存');
   });
